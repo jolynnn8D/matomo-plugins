@@ -1,0 +1,20 @@
+<div piwik-content-block content-title="User Flow Tree" help-url="https://matomo.org">
+{#    <div id="action-form">#}
+{#        <div piwik-field uicontrol="select" name="nb-actions"#}
+{#             data-title="Actions"#}
+{#             introduction="Number of tracked actions"#}
+{#             value="1"#}
+{#             inline-help="Select the number of actions to be tracked"#}
+{#             options='{1: 5,2: 10, 3: 15}'>#}
+{#        </div>#}
+{#    </div>#}
+    {{ chart | raw }}
+</div>
+<div piwik-content-block content-title="Most Used Workflow" help-url="https://matomo.org">
+    This table displays the most popular workflow in order of navigation. If there are more than one
+    workflow of equal popularity, it will display the longest one. <br><br>
+    {{ summary | raw}}
+</div>
+
+
+

@@ -1,0 +1,115 @@
+
+<div id="chartdiv" data-data="{{ data |json_encode }}">  </div>
+<div id="debugger"></div>
+
+<script type="text/javascript">
+    am4core.ready(function() {
+
+// Themes begin
+        am4core.useTheme(am4themes_animated);
+// Themes end
+
+        var chart = am4core.create("chartdiv", am4charts.SankeyDiagram);
+        chart.hiddenState.properties.opacity = 0; // this creates initial fade-in
+        var chartContainer = document.getElementById("chartdiv");
+        var data = JSON.parse(chartContainer.getAttribute('data-data'));
+        var dataString = chartContainer.getAttribute('data-data');
+
+        function addLink(from, childNode, chartData) {
+            var childUrl = childNode.url == "/" ? "/index" : childNode.url;
+            chartData.push({
+                from: from,
+                to: childNode.label + ": " + childUrl,
+                value: childNode.nb_visits,
+                domain: childNode.domain,
+                url: childUrl,
+                avg_time: childNode.average_time,
+            })
+            return chartData;
+        }
+
+        function processData(data) {
+            var chartData = [];
+            var currentNodes = [];
+            while (data.length != 0) {
+                var rootNode = data.shift();
+                chartData = addLink("Entry point", rootNode, chartData);
+                currentNodes.push(rootNode);
+                while (currentNodes.length !== 0) {
+                    var currNode = currentNodes.shift();
+                    var children = currNode.children;
+                    if (children.length !== 0) {
+                        children.forEach(returnChildren);
+                    }
+                    function returnChildren(childId) {
+                        for (var i = 0; i < data.length; i++) {
+                            if (data[i].label == childId) {
+                                var childNode = data.splice(i, 1)[0];
+                                var parentUrl = currNode.url == "/" ? "/index" : currNode.url;
+                                chartData = addLink(currNode.label + ": " + parentUrl, childNode, chartData);
+                                currentNodes.push(childNode);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            return chartData;
+        }
+        chartData = processData(data);
+        // document.getElementById("debugger").innerHTML = JSON.stringify(chartData);
+        chart.data = chartData;
+
+
+        chart.dataFields.fromName = "from";
+        chart.dataFields.toName = "to";
+        chart.dataFields.value = "value";
+
+        //chart
+        chart.paddingRight = 30;
+        chart.orientation = "vertical";
+
+        // nodes
+        var nodeTemplate = chart.nodes.template;
+        nodeTemplate.inert = true;
+        nodeTemplate.showSystemTooltip = true;
+        nodeTemplate.height = 50;
+        nodeTemplate.paddingRight = 10;
+        nodeTemplate.fontSize = 12;
+
+        nodeTemplate.togglable = false;
+        nodeTemplate.clickable = false;
+        nodeTemplate.showSystemTooltip = true;
+        nodeTemplate.cursorOverStyle = am4core.MouseCursorStyle.pointer
+        nodeTemplate.nameLabel.align = "center";
+        nodeTemplate.nameLabel.label.text = "[bold]{url}"
+        nodeTemplate.nameLabel.label.truncate = false;
+        nodeTemplate.nameLabel.label.wrap = true;
+        nodeTemplate.adapter.add("tooltipText", function(value, target) {
+            if (target.dataItem && target.level == 0) {
+                return "";
+            }
+            return value;
+        })
+        nodeTemplate.tooltipText = "URL: {domain}[bold]{url}\n Visitors: [bold]{value} \n Average Time: [bold]{avg_time}[/]s\n";
+        nodeTemplate.events.on("ready", function(event) {
+            let level = event.target.level;
+            if (level == 0) {
+                event.target.nameLabel.label.text = "Entry point"
+            }
+        })
+
+        // links
+        var linkTemplate = chart.links.template;
+        linkTemplate.tooltipText = "{from} → {to} \n[bold]{value}[/] visitors\n";
+        linkTemplate.fillOpacity = 0.5;
+        let hoverState = chart.links.template.states.create("hover");
+        hoverState.properties.fillOpacity = 0.85;
+
+        var labelBullet = chart.links.template.bullets.push(new am4charts.LabelBullet());
+        labelBullet.label.text = "[bold]{value}[/] user(s)"
+        labelBullet.label.rotation = -90;
+        labelBullet.locationY = 0.85;
+        ;
+    }); // end am4core.ready()
+</script>

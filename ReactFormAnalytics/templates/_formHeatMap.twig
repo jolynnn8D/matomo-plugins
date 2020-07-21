@@ -1,0 +1,30 @@
+<div id="messagecontainer"></div>
+
+<select class="browser-default" id="formNames" onchange="onFormChange(this)">
+    <option value="" selected>Select a form</option>
+    {% for name in formNames %}
+        <option value ="{{ name }}"> {{ name }} </option>
+    {% endfor %}
+    <option value="all">All forms</option>
+</select>
+
+<br>
+<div id="average_time"></div>
+<div id="chartdiv" data-data="{{ formData |json_encode }}"></div>
+<br>
+
+<div id="distributionmessage"></div>
+<div id="distributionchart" data-data="{{ formDistribution | json_encode }}"></div>
+
+
+<style>
+    #chartdiv {
+        width: 100%;
+        height: 650px;
+    }
+    #distributionchart {
+        width: 100%;
+        height: 500px;
+    }
+</style>
+
