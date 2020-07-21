@@ -25,16 +25,17 @@ following:
     import { useMatomo } from '@datapunt/matomo-tracker-react';
     import * as matomoTracker from "../matomoTracker"; //file path of wherever the matomoTracker.js file was stored
     
+    const userId; // optional - assign to any variable that you have that tracks user IDs.
     const { trackPageView, trackEvent } = useMatomo();  
     const dimensionID = 1; //or whatever your dimension ID for Form was
     matomoTracker.trackMatomoPages(trackPageView); //optional - used to track pages  
-    matomoTracker.handleMatomoForms(trackEvent, dimensionID);
+    matomoTracker.handleMatomoForms(trackEvent, dimensionID, userId); //userId is also optional here.
     ```
 
 ### Activate plugin
-To add to this plugin Matomo, add the entire repository to matomo/plugins folder.  
+To add to this plugin Matomo, add the entire folder to matomo/plugins folder.  
 Activate the plugin from Settings > Plugins or type
-`./console plugin:activate matomo-reactformanalytics` in the root folder of Matomo.
+`./console plugin:activate ReactFormAnalytics` in the root folder of Matomo.
 
 ### Using the plugin
 
