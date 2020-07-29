@@ -1,6 +1,4 @@
 function renderDistributionChart(formName) {
-
-
     var chartContainer = document.getElementById("distributionchart");
     var messageContainer = document.getElementById("distributionmessage");
 
@@ -13,17 +11,17 @@ function renderDistributionChart(formName) {
         return;
     }
     var myChartData = processDistributionData(data);
-
     function processDistributionData(data) {
         var chartData = [];
         while (data.length !== 0) {
             var formData = data.shift();
             var formName = formData.label;
-            var formUsers = formData.users;
-            for (var userId in formUsers) {
-                chartData = processUser(userId, formUsers[userId], chartData);
+            var formSessions = formData.sessions;
+            formSessions.forEach(processSession);
+            function processSession(session) {
+                chartData = addField(session.userId, session.timeSpent/60, session.nb_focusin,
+                    session.longest_field, session.longest_field_time, chartData);
             }
-
         }
         return chartData;
     }
@@ -39,7 +37,7 @@ function renderDistributionChart(formName) {
 
     function addField(userId, time, focusIns, longestField, longestFieldTime, chartData) {
         chartData.push({
-            "time": time,
+            "time": time.toFixed(2),
             "focusIns": focusIns,
             "longestField": longestField,
             "longestFieldTime": longestFieldTime,

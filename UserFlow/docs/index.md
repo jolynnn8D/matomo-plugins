@@ -6,7 +6,7 @@ To set up the Matomo development environment, use the developer guide [here](htt
 
 To add to this plugin Matomo, add the entire repository to matomo/plugins folder.  
 Activate the plugin from Settings > Plugins or type
-`./console plugin:activate matomo-userflow` in the root folder of Matomo.
+`./console plugin:activate UserFlow` in the root folder of Matomo.
 
 ## 2. Design Overview
 >This guide only covers the design of the User Flow plugin and is not
@@ -34,6 +34,16 @@ The Twig template converts the PHP array to a JavaScript array and the user
 flow tree is rendered using the amCharts library. The view is then rendered
 by the Controller, which is called upon when a Report tries to retrieve its UI 
 (i.e when you click on a particular Report in the Matomo interface).
+
+#### Specifications
+
+The plugin currently defaults to tracking for the last 100 visitors and records up to 30 actions
+performed by the visitors. This configuration is what is more suitable for the UI in most cases.  
+To modify any of these configurations, change the class attributes in the `UserFlow/API.php` file.  
+`$MAX_ACTION_STEPS` => number of URL actions by each visitor to track (note that refreshing is counted as one action)  
+`$MAX_VISITORS` => numbers of visitors to track e.g last 100  
+`$GROUPED_NODES` => by setting this to true, refreshing a page while staying on the same URL will be collapsed into one node.  
+
 
 ## 3. Implementation
 

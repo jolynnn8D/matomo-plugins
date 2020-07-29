@@ -12,7 +12,7 @@ class Controller extends \Piwik\Plugin\Controller
         $view = new View("@ReactFormAnalytics/index.twig");
         $view->formsDetected = $this -> renderFormUI();
 //        $view->formsDetected = $this -> getFormsDetected();
-        $view->formDistribution = $this -> getFormDistribution();
+//        $view->formDistribution = $this -> getFormDistribution();
         return $view -> render();
     }
 

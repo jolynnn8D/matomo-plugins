@@ -23,6 +23,7 @@ class API extends \Piwik\Plugin\API
 {
 
     public $MAX_ACTION_STEPS = 30;
+    public $MAX_VISITORS = 100;
     public $GROUPED_NODES = true;
 
     /**
@@ -174,7 +175,7 @@ class API extends \Piwik\Plugin\API
             'period' => $period,
             'date' => $date,
             'segment' => $segment,
-            'countVisitorsToFetch' => 100,
+            'countVisitorsToFetch' => $this->MAX_VISITORS,
         ));
 
         //Entry URL to node ID mapping
@@ -192,16 +193,17 @@ class API extends \Piwik\Plugin\API
             $parentId = $processedEntry['actionId']; //Retrieved ID for entry node
             $entryUrls = $processedEntry['entryUrls']; //Update URL mapping
 
-            for ($action = 1; $action <= $this -> MAX_ACTION_STEPS; $action++) {
-                if ($action >= sizeof($actions)) {
-                    break;  //User exit
-                } else {
-                    $currAction = $actions[$action];
-                    if ($currAction['type'] == 'action') {
-                        $processedAction = $this->processAction($currAction, $result, $parentId, $action, false);
-                        $result = $processedAction['result'];
-                        $parentId = $processedAction['actionId'];
-                    }
+            $actionNum = 0;
+            for ($action = 1; $action < sizeof($actions); $action++) {
+                if ($actionNum >= $this->MAX_ACTION_STEPS) {
+                    break;
+                }
+                $currAction = $actions[$action];
+                if ($currAction['type'] == 'action') {
+                    $actionNum++;
+                    $processedAction = $this->processAction($currAction, $result, $parentId, $action, false);
+                    $result = $processedAction['result'];
+                    $parentId = $processedAction['actionId'];
                 }
             }
 

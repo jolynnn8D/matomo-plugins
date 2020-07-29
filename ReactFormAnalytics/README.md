@@ -34,7 +34,7 @@ following:
 ### Activate plugin
 To add to this plugin Matomo, add the entire repository to matomo/plugins folder.  
 Activate the plugin from Settings > Plugins or type
-`./console plugin:activate matomo-reactformanalytics` in the root folder of Matomo.
+`./console plugin:activate ReactFormAnalytics` in the root folder of Matomo.
 
 ### Using the plugin
 

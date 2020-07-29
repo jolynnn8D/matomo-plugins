@@ -91,14 +91,22 @@ the nature of the event (INPUT or non-INPUT) is kept in a global array.
 
 ### 3.2 ReactFormAnalytics API
 
+#### 3.2.1 getFormsDetected
 **Input:** Two types of incoming events sent from the tracker - form focus in events and events detecting form elements.  
-**Output:**  An organized list of form fields with the below metrics.  
-1. Users: The number of users that clicked on the field. Any action done by a visitor (as defined by Matomo) in a single visit
+**Output:**  An organized list of forms and form fields with the below metrics.  
+
+Forms:  
+1. **Average Time**: Average time spent on form across users
+2. **Views**: Users who rendered the form
+3. **Users**: Number of users who interacted with the form.
+
+Fields:  
+1. **Users**: The number of users that clicked on the field. Any action done by a visitor (as defined by Matomo) in a single visit
 session is considered to be one user.  
-2. Average Time: The average time that users spend on the field. This is calculated by the total time spent on the field 
+2. **Average Time**: The average time that users spend on the field. This is calculated by the total time spent on the field 
 by a user. (i.e if a user clicks on a field 3 times for 3 seconds each, he/she is considered to have spent a total of 9s   
  on the field and 9s would be the value used in the calculation of average time).
-3. Average Clicks: The average number of times users click on the field (to revisit the field etc.).
+3. **Average Clicks**: The average number of times users click on the field (to revisit the field etc.).
 
 #### Processing Events
 The events are retrieved by calling the API method from the Live plugin, using `Request::processRequest('Live.getLastVisitsDetails')`;
@@ -132,6 +140,23 @@ added to the DataTable and the timer will reset.
 void as the user is assumed to have not completed the workflow and the time spent on the form is not indicative of the time
 a user would spend completing the form.
 
+#### 3.2.2 getFormTimeDistribution
+
+**Input**: Focus-in events on fields  
+**Output**: Distribution chart of time spent on each form by every user.
+
+![Form Distribution](../images/FormDistribution.png)
+
+In the above graph, each dot represents a `session`. Similar to how users are considered in `getFormsDetected`, each 
+session is considered to have ended when:
+1. The user's session ends (by Matomo's definition).
+2. The user clicks on a submit button.
+3. The user leaves a form workflow to a different URL (in this case, the session will not be recorded).
+
+#### Processing Events
+In this method, we only look at focus-in and submit events. For each user, we initialise a user disitribution table as follows:  
+| Form Name | Time Spent on Form | Focus-in on Form | Fields |  
+| - | - | - | - | 
 ### 3.3 Considerations/Areas of Improvement
 There are a few odd implementations in this plugin that may not be ideal.
 1. The plugin uses the name attribute to uniquely identify each field. This would mean that there will be glitches if 

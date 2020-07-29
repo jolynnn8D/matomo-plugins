@@ -29,7 +29,8 @@ class API extends \Piwik\Plugin\API
     private $logger;
 
 
-    public function __construct(\Psr\Log\LoggerInterface $logger) {
+    public function __construct(\Psr\Log\LoggerInterface $logger)
+    {
         $this->logger = $logger;
     }
 
@@ -43,7 +44,8 @@ class API extends \Piwik\Plugin\API
      * @param bool $segment
      * @return DataTable
      */
-    public function getFormsDetected($idSite, $period, $date, $segment = false) {
+    public function getFormsDetected($idSite, $period, $date, $segment = false)
+    {
         $forms = new DataTable();
 
         $data = \Piwik\API\Request::processRequest('Live.getLastVisitsDetails', array(
@@ -51,33 +53,31 @@ class API extends \Piwik\Plugin\API
             'period' => $period,
             'date' => $date,
             'segment' => $segment,
-            'countVisitorsToFetch' => $this -> NUM_OF_VISITORS,
+            'countVisitorsToFetch' => $this->NUM_OF_VISITORS,
         ));
 
-        $last = $data -> getFirstRow();
-        print_r("User Id: " . $last['userId']);
         // Note: Custom Dimensions must be set up using name in $FORM_DIMENSION_NAME to proceed with the rest
         // of the API.
         $customDimensions = \Piwik\API\Request::processRequest('CustomDimensions.getConfiguredCustomDimensions',
             array('idSite' => $idSite));
 
-        $dimensionId = $this -> retrieveFormDimensionId($customDimensions);
-        if($dimensionId == false) {
+        $dimensionId = $this->retrieveFormDimensionId($customDimensions);
+        if ($dimensionId == false) {
             $this->logger->error("Custom dimensions have not been set up correctly\n");
             return $forms;
         }
-        $this -> DIMENSION_KEY = Commons::DIMENSION_PREFIX . $dimensionId;
+        $this->DIMENSION_KEY = Commons::DIMENSION_PREFIX . $dimensionId;
 
-        foreach ($data -> getRows() as $visitRow) {
-            $actions = $visitRow -> getColumn(Commons::ACTION_KEY);
+        foreach ($data->getRows() as $visitRow) {
+            $actions = $visitRow->getColumn(Commons::ACTION_KEY);
             $userEvents = []; // Stores forms accessed by a single user
             $currUrl = "";
-            foreach($actions as $action) {
+            foreach ($actions as $action) {
 
                 // If the URL of the action changes, it is assumed that the user abandoned the workflow and
                 // the user's actions will be cleared out
                 $actionUrl = $action['url'];
-                $isDifferentUrl = $this -> checkUrlChange($currUrl, $actionUrl);
+                $isDifferentUrl = $this->checkUrlChange($currUrl, $actionUrl);
                 if ($isDifferentUrl) {
                     $userEvents = [];
                 }
@@ -87,15 +87,15 @@ class API extends \Piwik\Plugin\API
                     $formEvent = $action[Commons::EVENT_ACTION];
                     switch ($formEvent) {
                         case 'detect-form-element':
-                            $userEvents = $this -> processDetectFormElementEvent($action, $userEvents);
+                            $userEvents = $this->processDetectFormElementEvent($action, $userEvents);
                             break;
                         case 'focus-in':
-                            $userEvents = $this -> processFocusInEvent($action, $userEvents);
+                            $userEvents = $this->processFocusInEvent($action, $userEvents);
                             break;
                         case 'submit':
                             // When the form is submitted, the current data is added to the user events and
                             // a new session is initiated.
-                            $forms = $this -> addUserEventsToDataTable($userEvents, $forms);
+                            $forms = $this->addUserEventsToDataTable($userEvents, $forms);
                             $userEvents = [];
                             break;
                         default:
@@ -103,7 +103,7 @@ class API extends \Piwik\Plugin\API
                     }
                 }
             }
-            $forms = $this -> addUserEventsToDataTable($userEvents, $forms);
+            $forms = $this->addUserEventsToDataTable($userEvents, $forms);
         }
         return $forms;
     }
@@ -115,7 +115,8 @@ class API extends \Piwik\Plugin\API
      * @param string $actionUrl Next URL in line.
      * @return bool Returns true if actionUrl is different from currUrl.
      */
-    private function checkUrlChange($currUrl, $actionUrl) {
+    private function checkUrlChange($currUrl, $actionUrl)
+    {
         return $currUrl != $actionUrl;
     }
 
@@ -126,17 +127,18 @@ class API extends \Piwik\Plugin\API
      * @param array $userEvents The current actions that the user has taken, organized by forms.
      * @return array Updated version of user events that includes the latest action.
      */
-    private function processDetectFormElementEvent($action, $userEvents) {
-        $formName = $action[$this -> DIMENSION_KEY];
+    private function processDetectFormElementEvent($action, $userEvents)
+    {
+        $formName = $action[$this->DIMENSION_KEY];
         if ($formName == '') {
             return $userEvents;
         }
 
         if (!array_key_exists($formName, $userEvents)) {
-            $userEvents = $this -> initialiseNewForm($formName, $userEvents);
+            $userEvents = $this->initialiseNewForm($formName, $userEvents);
         }
 
-        $userEvents = $this -> addFormField($action, $formName, $userEvents);
+        $userEvents = $this->addFormField($action, $formName, $userEvents);
         return $userEvents;
     }
 
@@ -148,26 +150,27 @@ class API extends \Piwik\Plugin\API
      * @param array $userEvents The current actions that the user has taken, organized by forms.
      * @return array Updated version of user events that includes the latest action.
      */
-    private function processFocusInEvent($action, $userEvents) {
-        $formName = $action[$this -> DIMENSION_KEY];
+    private function processFocusInEvent($action, $userEvents)
+    {
+        $formName = $action[$this->DIMENSION_KEY];
         if ($formName == Commons::INDIV_FIELD) {
-            return $this -> processIndividualFieldEvent($action, $userEvents);
+            return $this->processIndividualFieldEvent($action, $userEvents);
         }
         if (!array_key_exists($formName, $userEvents)) {
-            $userEvents = $this -> processDetectFormElementEvent($action, $userEvents);
+            $userEvents = $this->processDetectFormElementEvent($action, $userEvents);
         }
 
-        $fieldName = $this -> retrieveEventName($action);
+        $fieldName = $this->retrieveEventName($action);
         $fields = $userEvents[$formName][Commons::FIELD_KEY];
         if (!array_key_exists($fieldName, $fields)) {
-            $userEvents = $this -> processDetectFormElementEvent($action, $userEvents);
+            $userEvents = $this->processDetectFormElementEvent($action, $userEvents);
         }
 
-        $timeSpent = $this -> retrieveEventTimeSpent($action);
+        $timeSpent = $this->retrieveEventTimeSpent($action);
         $userEvents[$formName]['average_time'] += $timeSpent;
         $userEvents[$formName]['users'] = 1;
         $field = $userEvents[$formName][Commons::FIELD_KEY][$fieldName];
-        $userEvents[$formName][Commons::FIELD_KEY][$fieldName] = $this -> updateFieldUserEvents($field, $timeSpent);
+        $userEvents[$formName][Commons::FIELD_KEY][$fieldName] = $this->updateFieldUserEvents($field, $timeSpent);
 
         return $userEvents;
     }
@@ -179,11 +182,12 @@ class API extends \Piwik\Plugin\API
      * @param array $userEvents The current actions that the user has taken, organized by forms.
      * @return array Updated version of user events that includes the latest action.
      */
-    private function processIndividualFieldEvent($action, $userEvents) {
+    private function processIndividualFieldEvent($action, $userEvents)
+    {
         if (!array_key_exists(Commons::INDIV_FIELD, $userEvents)) {
-            $userEvents = $this -> initialiseNewForm(Commons::INDIV_FIELD, $userEvents);
+            $userEvents = $this->initialiseNewForm(Commons::INDIV_FIELD, $userEvents);
         }
-        $fieldName = $this -> retrieveEventName($action);
+        $fieldName = $this->retrieveEventName($action);
         if ($fieldName == '') {
             $this->logger->warning("Individual field does not have a name and will not be recorded\n");
             return $userEvents;
@@ -192,10 +196,10 @@ class API extends \Piwik\Plugin\API
         if (array_key_exists($fieldName, $fields)) {
             $currField = $fields[$fieldName];
         } else {
-            $currField = $this -> initialiseNewField($fieldName);
+            $currField = $this->initialiseNewField($fieldName);
             $userEvents[Commons::INDIV_FIELD]['nb_fields'] += 1;
         }
-        $userEvents = $this -> updateIndivField($currField, $fieldName, $action, $userEvents);
+        $userEvents = $this->updateIndivField($currField, $fieldName, $action, $userEvents);
         return $userEvents;
     }
 
@@ -207,9 +211,10 @@ class API extends \Piwik\Plugin\API
      * @param array $userEvents Updated version of user events that includes the latest action.
      * @return
      */
-    private function updateIndivField($currField, $fieldName, $action, $userEvents) {
+    private function updateIndivField($currField, $fieldName, $action, $userEvents)
+    {
         $timeSpent = $this->retrieveEventTimeSpent($action);
-        $newField = $this -> updateFieldUserEvents($currField, $timeSpent);
+        $newField = $this->updateFieldUserEvents($currField, $timeSpent);
         $userEvents[Commons::INDIV_FIELD][Commons::FIELD_KEY][$fieldName] = $newField;
         return $userEvents;
     }
@@ -223,7 +228,8 @@ class API extends \Piwik\Plugin\API
      * @param int $timeSpent Time spent on the field in the single action.
      * @return array Updated information on the field.
      */
-    private function updateFieldUserEvents($field, $timeSpent) {
+    private function updateFieldUserEvents($field, $timeSpent)
+    {
         $field['users'] = 1;
         $field['average_time'] += $timeSpent;
         $field['average_clicks'] += 1;
@@ -238,7 +244,8 @@ class API extends \Piwik\Plugin\API
      * @param array $forms The existing array of forms and its fields.
      * @return array Updated array of forms with the new field.
      */
-    private function addFormField($action, $formName, $forms) {
+    private function addFormField($action, $formName, $forms)
+    {
         if (!array_key_exists($formName, $forms)) {
             // Validation for existence of form wtih a given name in forms
             return $forms;
@@ -247,7 +254,7 @@ class API extends \Piwik\Plugin\API
         if (!array_key_exists(Commons::EVENT_NAME, $action)) {
             $fieldName = 'Untracked Field ' . $fieldIndex;
         } else {
-            $fieldName = $this -> retrieveEventName($action);
+            $fieldName = $this->retrieveEventName($action);
         }
 
         $formItem = $forms[$formName];
@@ -257,7 +264,7 @@ class API extends \Piwik\Plugin\API
             return $forms;
         }
 
-        $fieldArray = $this -> initialiseNewField($fieldName);
+        $fieldArray = $this->initialiseNewField($fieldName);
         $fields[$fieldName] = $fieldArray;
         $formItem[Commons::FIELD_KEY] = $fields;
         $formItem['nb_fields'] += 1;
@@ -270,7 +277,8 @@ class API extends \Piwik\Plugin\API
      * @param string $fieldName Name of the new field.
      * @return array Empty field.
      */
-    private function initialiseNewField($fieldName) {
+    private function initialiseNewField($fieldName)
+    {
         $fieldArray = array(
             'label' => $fieldName,
             'users' => 0,
@@ -285,14 +293,15 @@ class API extends \Piwik\Plugin\API
      * @param string $formName Name of the form to be initialised.
      * @return array $forms Updated array of forms with the new form.
      */
-    private function initialiseNewForm($formName, $forms) {
+    private function initialiseNewForm($formName, $forms)
+    {
         $form = array(
-                'label' => $formName,
-                'views' => 1,
-                'users' => 0,
-                'average_time' => 0,
-                'nb_fields' => 0,
-                Commons::FIELD_KEY => []);
+            'label' => $formName,
+            'views' => 1,
+            'users' => 0,
+            'average_time' => 0,
+            'nb_fields' => 0,
+            Commons::FIELD_KEY => []);
         $forms[$formName] = $form;
         return $forms;
     }
@@ -305,13 +314,14 @@ class API extends \Piwik\Plugin\API
      * @param DataTable $forms DataTable of all user's events.
      * @return DataTable Updated DataTable of all events.
      */
-    private function addUserEventsToDataTable($userEvents, $forms) {
-        foreach($userEvents as $formName => $formDetails) {
-            $formRow = $forms -> getRowFromLabel($formName);
+    private function addUserEventsToDataTable($userEvents, $forms)
+    {
+        foreach ($userEvents as $formName => $formDetails) {
+            $formRow = $forms->getRowFromLabel($formName);
             if ($formRow == false) {
                 $forms = $this->initialiseNewDataTableForm($formDetails, $forms);
             } else {
-                $this -> updateDataTableMetrics($formDetails, $formRow);
+                $this->updateDataTableMetrics($formDetails, $formRow);
             }
         }
         return $forms;
@@ -324,7 +334,8 @@ class API extends \Piwik\Plugin\API
      * @param DataTable $forms Current collection of all user's events on forms.
      * @return DataTable Updated collection of all user's events on forms.
      */
-    private function initialiseNewDataTableForm($form, $forms) {
+    private function initialiseNewDataTableForm($form, $forms)
+    {
         $newForm = new Row(array(
             Row::COLUMNS => array(
                 'label' => $form['label'],
@@ -335,7 +346,7 @@ class API extends \Piwik\Plugin\API
                 Commons::FIELD_KEY => $form[Commons::FIELD_KEY],
             )
         ));
-        $forms -> addRow($newForm);
+        $forms->addRow($newForm);
         return $forms;
     }
 
@@ -343,11 +354,12 @@ class API extends \Piwik\Plugin\API
      * @param array $formDetails Details of the incoming form.
      * @param Row $formRow Current information of the form.
      */
-    private function updateDataTableMetrics($formDetails, $formRow) {
-        $currViews = $formRow -> getColumn('views');
-        $currUsers = intval($formRow -> getColumn('users'));
-        $currTimeSpent = intval($formRow -> getColumn('average_time'));
-        $currFields = $formRow -> getColumn(Commons::FIELD_KEY);
+    private function updateDataTableMetrics($formDetails, $formRow)
+    {
+        $currViews = $formRow->getColumn('views');
+        $currUsers = intval($formRow->getColumn('users'));
+        $currTimeSpent = intval($formRow->getColumn('average_time'));
+        $currFields = $formRow->getColumn(Commons::FIELD_KEY);
         $newViews = $currViews + 1;
         $newUsers = $currUsers + $formDetails['users'];
         if ($newUsers != 0) {
@@ -357,15 +369,15 @@ class API extends \Piwik\Plugin\API
         }
 
         $newFields = $currFields;
-        foreach($formDetails[Commons::FIELD_KEY] as $fieldName => $field) {
+        foreach ($formDetails[Commons::FIELD_KEY] as $fieldName => $field) {
             $newFields[$fieldName] = $this->updateFieldMetrics(
                 $currFields, $fieldName,
                 $field);
         }
-        $formRow -> setColumn('views', $newViews);
-        $formRow -> setColumn('users', $newUsers);
-        $formRow -> setColumn('average_time', $newTimeSpent);
-        $formRow -> setColumn(Commons::FIELD_KEY, $newFields);
+        $formRow->setColumn('views', $newViews);
+        $formRow->setColumn('users', $newUsers);
+        $formRow->setColumn('average_time', $newTimeSpent);
+        $formRow->setColumn(Commons::FIELD_KEY, $newFields);
         return $formRow;
     }
 
@@ -376,7 +388,8 @@ class API extends \Piwik\Plugin\API
      * @param array $incomingField Details of the new field with details to be added to the DataTable.
      * @return array
      */
-    private function updateFieldMetrics($currFields, $fieldName, $incomingField) {
+    private function updateFieldMetrics($currFields, $fieldName, $incomingField)
+    {
         if (!array_key_exists($fieldName, $currFields)) {
             // If there is no information on the field stored, it can simply be returned as it is.
             return $incomingField;
@@ -399,15 +412,249 @@ class API extends \Piwik\Plugin\API
         return $targetField;
     }
 
-    // Utils
+    /**
+     * Returns a Data Table where each form stores an array of users, each with its associated time spent
+     * on the form as well as the field on which the user spent the most time on. This allows a distribution
+     * graph for each form to be displayed.
+     * @param $idSite
+     * @param $period
+     * @param $date
+     * @param bool $segment
+     * @return DataTable
+     */
+    public function getFormTimeDistribution($idSite, $period, $date, $segment = false)
+    {
+        $distributions = new DataTable();
+
+        $data = \Piwik\API\Request::processRequest('Live.getLastVisitsDetails', array(
+            'idSite' => $idSite,
+            'period' => $period,
+            'date' => $date,
+            'segment' => $segment,
+            'countVisitorsToFetch' => $this->NUM_OF_VISITORS,
+        ));
+
+        $customDimensions = \Piwik\API\Request::processRequest('CustomDimensions.getConfiguredCustomDimensions',
+            array('idSite' => $idSite));
+
+        $dimensionId = $this->retrieveFormDimensionId($customDimensions);
+        if ($dimensionId == false) {
+            $this->logger->error("Custom dimensions have not been set up correctly\n");
+            return $distributions;
+        }
+
+        $this->DIMENSION_KEY = Commons::DIMENSION_PREFIX . $dimensionId;
+
+        foreach ($data->getRows() as $visitRow) {
+            $userId = $this->retrieveUserId($visitRow);
+            $actions = $visitRow->getColumn(Commons::ACTION_KEY);
+            $distributions = $this->addUserEventsToDistribution($userId, $actions, $distributions);
+        }
+
+        return $distributions;
+    }
+
+    /**
+     * Adds all of an individual user's actions to the distribution DataTable.
+     * @param string|bool $actionUserId Custom User ID of the user, if specified, else false.
+     * @param array $actions Actions done by a single user.
+     * @param DataTable $distributions Stored information on previous user's actions on forms.
+     * @return DataTable Updated DataTable with the user's actions.
+     */
+    private function addUserEventsToDistribution($actionUserId, $actions, $distributions)
+    {
+        static $userId = 1;
+        if ($actionUserId == false) {
+            $actionUserId = $userId;
+        }
+        $userDistribution = [];
+        $currUrl = "";
+        foreach ($actions as $action) {
+            $actionUrl = $action['url'];
+            $isDifferentUrl = $this->checkUrlChange($currUrl, $actionUrl);
+            if ($isDifferentUrl) {
+                $userDistribution = [];
+            }
+            $currUrl = $actionUrl;
+
+            if ($this->isFormFocusInEvent($action)) {
+                $userDistribution = $this->addSingleEventToUserDistribution($action, $userDistribution);
+            } else if ($this->isFormSubmitEvent($action)) {
+                $distributions = $this->addUserDistributionToDataTable($actionUserId, $userDistribution, $distributions);
+                $userDistribution = [];
+            }
+        }
+        $distributions = $this->addUserDistributionToDataTable($actionUserId, $userDistribution, $distributions);
+
+        $userId++;
+        return $distributions;
+    }
+
+    /** Stores a single event into the user's array.
+     * The user's array keeps a consolidated value of the total amount of time
+     * the user spends on each field in the entire session.
+     * @param array $action The details of the event action.
+     * @param array $userDistribution The current time distirbution of the user's activities.
+     * @return array The updated distribution of the single user's activities.
+     */
+    public function addSingleEventToUserDistribution($action, $userDistribution)
+    {
+        $formName = $action[$this->DIMENSION_KEY];
+        $fieldName = $this->retrieveEventName($action);
+        $actionTime = $this->retrieveEventTimeSpent($action);
+        if (!array_key_exists($formName, $userDistribution)) {
+            $userDistribution = $this->initialiseSessionForm($formName, $userDistribution);
+
+        }
+        $formArray = $userDistribution[$formName];
+        $formArray['nb_focusin'] += 1;
+        $formArray['timeSpent'] += $actionTime;
+
+
+        if (!array_key_exists($fieldName, $formArray['fields'])) {
+            $formArray['fields'][$fieldName] = $actionTime;
+        } else {
+            $formArray['fields'][$fieldName] += $actionTime;
+        }
+        $userDistribution[$formName] = $formArray;
+
+        return $userDistribution;
+    }
+
+    /** Checks if an action is a form focus-in event.
+     * @param array $action The action to check.
+     * @return bool Returns true if the action is a form focus-in event.
+     */
+    public function isFormFocusInEvent($action)
+    {
+        return $action[Commons::ACTION_TYPE] == 'event' &&
+            $action[Commons::EVENT_CATEGORY] == 'forms' &&
+            $action[Commons::EVENT_ACTION] == 'focus-in';
+    }
+
+    /** Checks if an action is a form submit event.
+     * @param array $action The action to check.
+     * @return bool Returns true if the action is a form submit event.
+     */
+    public function isFormSubmitEvent($action)
+    {
+        return $action[Commons::ACTION_TYPE] == 'event' &&
+            $action[Commons::EVENT_CATEGORY] == 'forms' &&
+            $action[Commons::EVENT_ACTION] == 'submit';
+    }
+
+    /**
+     * Adds a user's activities with forms into the DataTable. In this function, the
+     * field that the user spends the most time on (in the entire session) is found
+     * and added to the DataTable.
+     * @param int | string $userId A custom user ID if there is one, else a number that is generated previously.
+     * @param array $userDistribution The user's interaction with all forms in a single session.
+     * @param DataTable $distributions The current DataTable with user distributions.
+     * @return DataTable Updated DataTable with the new user's distribution.
+     */
+    public function addUserDistributionToDataTable($userId, $userDistribution, $distributions)
+    {
+        foreach ($userDistribution as $formName => $details) {
+            $formDistribution = $distributions->getRowFromLabel($formName);
+            if ($formDistribution == false) {
+                $distributions = $this->initialiseFormDistribution($formName, $distributions);
+                $formDistribution = $distributions->getRowFromLabel($formName);
+            }
+
+            $formUsers = $formDistribution->getColumn('sessions');
+            $formUsers = $this->addSession($userId, $details, $formUsers);
+
+            $formDistribution->setColumn('sessions', $formUsers);
+
+        }
+        return $distributions;
+    }
+
+
+    /**
+     * Initialises a DataTable Row for a new form that will contain the distribution's information.
+     * @param string $formName Name of the form.
+     * @param DataTable $distributions Current DataTable.
+     * @return DataTable Updated DataTable with the new form initiatied.
+     */
+    private function initialiseFormDistribution($formName, $distributions)
+    {
+        $newDistribution = new Row(array(
+            Row::COLUMNS => array(
+                'label' => $formName,
+                'sessions' => [],
+            )
+        ));
+        $distributions->addRow($newDistribution);
+        return $distributions;
+    }
+
+    /**
+     * Adds a new session by a user into the sessions array in the DataTable.
+     * @param string | int $userId A custom user ID is there is one, else it's an integer generated previously.
+     * @param array $details All details of user's interaction with a form.
+     * @param array $formUsers All currently recorded sessions for a form.
+     * @return array Updated sessions for a form to include the new user's session.
+     */
+    private function addSession($userId, $details, $formUsers)
+    {
+        $longest_field = $this->findLongestField($details['fields']);
+        $session = array(
+            'userId' => $userId,
+            'timeSpent' => $details['timeSpent'],
+            'nb_focusin' => $details['nb_focusin'],
+            'longest_field' => $longest_field['name'],
+            'longest_field_time' => $longest_field['time'],
+        );
+        array_push($formUsers, $session);
+        return $formUsers;
+    }
+
+    /**
+     * Finds the field on which a user spent the most time on.
+     * @param array $fields User's interaction with the fields in the form.
+     * @return array Details on the field identified.
+     */
+    private function findLongestField($fields)
+    {
+        $currTime = 0;
+        $currName = "";
+        foreach ($fields as $fieldName => $timeSpent) {
+            if ($timeSpent >= $currTime) {
+                $currTime = $timeSpent;
+                $currName = $fieldName;
+            }
+        }
+        return array('name' => $currName, 'time' => $currTime);
+    }
+
+    /**
+     * Initialises a new form within a user's session.
+     * @param string $formName Name of the form.
+     * @param array $userDistribution Details on the user's ongoing session.
+     * @return array Updated session details that includes the new form.
+     */
+    private function initialiseSessionForm($formName, $userDistribution)
+    {
+        $newSessionForm = array(
+            'timeSpent' => 0,
+            'nb_focusin' => 0,
+            'fields' => [],
+        );
+        $userDistribution[$formName] = $newSessionForm;
+        return $userDistribution;
+    }
+
+// Utils
 
     /**
      * Retrieves the action of the event with key eventAction, e.g focus-in, detect-form-element, submit
      * @param array $action Details of the action
      * @return string|null Returns the nature of the action if available, else null.
      */
-    private function retrieveEventAction($action) {
-        if(array_key_exists(Commons::EVENT_ACTION, $action)) {
+    private function retrieveEventAction($action)
+    {
+        if (array_key_exists(Commons::EVENT_ACTION, $action)) {
             return $action[Commons::EVENT_ACTION];
         } else {
             return null;
@@ -419,7 +666,8 @@ class API extends \Piwik\Plugin\API
      * @param array $action Details of the action.
      * @return int|float
      */
-    private function retrieveEventValue($action) {
+    private function retrieveEventValue($action)
+    {
         if (array_key_exists(Commons::EVENT_VALUE, $action)) {
             return $action[Commons::EVENT_VALUE];
         } else {
@@ -432,7 +680,8 @@ class API extends \Piwik\Plugin\API
      * @param array $action Details of the action.
      * @return int Time spent on the event if recorded.
      */
-    private function retrieveEventTimeSpent($action) {
+    private function retrieveEventTimeSpent($action)
+    {
         if (array_key_exists(Commons::TIME_KEY, $action)) {
             return $action[Commons::TIME_KEY];
         } else {
@@ -445,7 +694,8 @@ class API extends \Piwik\Plugin\API
      * @param array $action Details of the action.
      * @return string Name of the event, else empty string.
      */
-    private function retrieveEventName($action) {
+    private function retrieveEventName($action)
+    {
         if (array_key_exists(Commons::EVENT_NAME, $action)) {
             $eventName = $action[Commons::EVENT_NAME];
             return $eventName;
@@ -460,159 +710,22 @@ class API extends \Piwik\Plugin\API
      * @param array $customDimensions List of custom dimensions set up in the user's Matomo.
      * @return int|bool Returns the ID of the custom dimension for Forms if any. Else, returns false.
      */
-    private function retrieveFormDimensionId($customDimensions) {
-        foreach($customDimensions as $customDimension) {
-            if ($customDimension['name'] == $this -> FORM_DIMENSION_NAME) {
+    private function retrieveFormDimensionId($customDimensions)
+    {
+        foreach ($customDimensions as $customDimension) {
+            if ($customDimension['name'] == $this->FORM_DIMENSION_NAME) {
                 return $customDimension['idcustomdimension'];
             }
         }
         return false;
     }
 
-    private function retrieveUserId($visitor) {
+    private function retrieveUserId($visitor)
+    {
         if (array_key_exists('userId', $visitor)) {
             return $visitor['userId'];
         } else {
             return false;
         }
-    }
-    /**
-     * Returns a Data Table where each form stores an array of users, each with its associated time spent
-     * on the form as well as the field on which the user spent the most time on. This allows a distribution
-     * graph for each form to be displayed.
-     * @param $idSite
-     * @param $period
-     * @param $date
-     * @param bool $segment
-     * @return DataTable
-     */
-    public function getFormTimeDistribution($idSite, $period, $date, $segment = false) {
-        $distributions = new DataTable();
-
-        $data = \Piwik\API\Request::processRequest('Live.getLastVisitsDetails', array(
-            'idSite' => $idSite,
-            'period' => $period,
-            'date' => $date,
-            'segment' => $segment,
-            'countVisitorsToFetch' => $this -> NUM_OF_VISITORS,
-        ));
-
-        $customDimensions = \Piwik\API\Request::processRequest('CustomDimensions.getConfiguredCustomDimensions',
-            array('idSite' => $idSite));
-
-        $dimensionId = $this -> retrieveFormDimensionId($customDimensions);
-        if($dimensionId == false) {
-            $this->logger->error("Custom dimensions have not been set up correctly\n");
-            return $distributions;
-        }
-
-        $this -> DIMENSION_KEY = Commons::DIMENSION_PREFIX . $dimensionId;
-
-        foreach($data -> getRows() as $visitRow) {
-            $userId = $this -> retrieveUserId($visitRow);
-            $actions = $visitRow -> getColumn(Commons::ACTION_KEY);
-            $distributions = $this -> addUserEventsToDistribution($userId, $actions, $distributions);
-        }
-
-        return $distributions;
-    }
-
-    /**
-     * Adds all of an individual user's actions to the distribution DataTable.
-     * @param string|bool $actionUserId Custom User ID of the user, if specified, else false.
-     * @param array $actions Actions done by a single user.
-     * @param DataTable $distributions Stored information on previous user's actions on forms.
-     * @return DataTable Updated DataTable with the user's actions.
-     */
-    private function addUserEventsToDistribution($actionUserId, $actions, $distributions) {
-        static $userId = 1;
-        if ($actionUserId == false) {
-            $actionUserId = $userId;
-        }
-
-        foreach($actions as $action) {
-            if ($action[Commons::ACTION_TYPE] == 'event' &&
-                $action[Commons::EVENT_CATEGORY] == 'forms' &&
-                $action[Commons::EVENT_ACTION] == 'focus-in') {
-
-                $formName = $action[$this -> DIMENSION_KEY];
-                $formDistribution = $distributions -> getRowFromLabel($formName);
-
-                if ($formDistribution == false) {
-                    $distributions = $this -> initialiseFormDistribution($formName, $distributions);
-                    $formDistribution = $distributions -> getRowFromLabel($formName);
-                }
-
-                $formUsers = $formDistribution -> getColumn('users');
-                if (!array_key_exists($actionUserId, $formUsers)) {
-                    $formUsers = $this -> initialiseNewUser($actionUserId, $formUsers);
-                }
-                $formUsers = $this -> addSingleEventToUserInfo($action, $actionUserId, $formUsers);
-                $formDistribution -> setColumn('users', $formUsers);
-            }
-        }
-
-        $userId++;
-        return $distributions;
-    }
-
-    /**
-     * Adds a single action to the array storing the user's actions.
-     * @param array $action Details of the user actions.
-     * @param integer $userId A unique user ID for the user interacting with the form.
-     * @param array $formUsers Current array of users that have interacted with the form.
-     * @return array Updated array of user distribution to be stored in the DataTable.
-     */
-    private function addSingleEventToUserInfo($action, $userId, $formUsers) {
-        $actionTime = $this -> retrieveEventTimeSpent($action);
-        $fieldName = $this -> retrieveEventName($action);
-        if ($fieldName == '') {
-            return $formUsers;
-        }
-        $user = $formUsers[$userId];
-
-        $user[Commons::TIME_KEY] += $actionTime;
-        $user['nb_focusin'] += 1;
-        $currLongestTime = $user['longest_field_time'];
-        if ($actionTime >= $currLongestTime) {
-            $user['longest_field'] = $fieldName;
-            $user['longest_field_time'] = $actionTime;
-        }
-
-        $formUsers[$userId] = $user;
-        return $formUsers;
-    }
-
-    /**
-     * Initialises a DataTable Row for a new form that will contain the distribution's information.
-     * @param string $formName Name of the form.
-     * @param DataTable $distributions Current DataTable.
-     * @return DataTable Updated DataTable with the new form initiatied.
-     */
-    private function initialiseFormDistribution($formName, $distributions) {
-        $newDistribution = new Row(array(
-            Row::COLUMNS => array(
-                'label' => $formName,
-                'users' => [],
-            )
-        ));
-        $distributions -> addRow($newDistribution);
-        return $distributions;
-    }
-
-    /**
-     * Initialises a new user in the form's user distribution.
-     * @param int $userId The user's unique id.
-     * @param array $formUsers Current distribution of the users of a particular form.
-     * @return array Updated distribution of the users of a particular form.
-     */
-    private function initialiseNewUser($userId, $formUsers) {
-        $formUsers[$userId] = array(
-            'timeSpent' => 0,
-            'nb_focusin' => 0,
-            'longest_field' => '',
-            'longest_field_time' => 0,
-        );
-        return $formUsers;
     }
 }
