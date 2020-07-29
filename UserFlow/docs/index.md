@@ -80,6 +80,15 @@ for each visitor:
             update the previous node to contain this node as a child
 </pre>
 
+#### 3.1.2 getSummary
+**Input**: DataTable from `getUserFlowTree`  
+**Output**: Most commonly used workflow by all users
+
+Process: The User Flow Tree is simply traversed and the algorithm picks the path with the highest weight (i.e most visitors). Along the way, it adds the URL of the nodes as well as the average time spent on the particular URL in the workflow.  
+If there are multiple trees or paths with the same weight, the algorithm does a DFS of the paths and picks the path with the highest depth (i.e longest path).
+
+
+
 ### 3.2 Controller
 The methods in the controllers define the UI of reports with the same name. i.e
 controller function `getUserFlowTree()` renders the UI of the report `getUserFlowTree()`.
