@@ -153,10 +153,20 @@ session is considered to have ended when:
 2. The user clicks on a submit button.
 3. The user leaves a form workflow to a different URL (in this case, the session will not be recorded).
 
+That being said, each user (as defined by Matomo) can have multiple sessions if they submit multiple forms.
+
 #### Processing Events
-In this method, we only look at focus-in and submit events. For each user, we initialise a user disitribution table as follows:  
-| Form Name | Time Spent on Form | Focus-in on Form | Fields |  
-| - | - | - | - | 
+In this method, we only look at focus-in and submit events. For each user, we initialise a user disitribution table (in the form of arrays), which could look something like that represented in a table format:  
+
+| Form Name | Time Spent on Form (seconds) | Focus-ins on Form | Fields |  
+| --- | ---- | --- | --- |  
+| Test Form | 50 | 10 | Field Name 1 => 20 (seconds)  <br> Field Name 2 => 30 (seconds) |
+
+After the information for each user has been summarized, we iterate through each form that the user accessed to find the field on which the user spent the most time on. The information is then organised and added into the DataTable, which is the consolidated data for **all users** and their sessions.
+
+| Label | Sessions |
+| --- | --- |
+| Test Form | __Session 1__ <br> User ID: Test User <br> Time Spent: 50 <br> Focus-ins: 10 <br> Field with longest time: Field Name 2 <br> Time spent on longest field: 30 <br> __Session 2__ <br> ...|
 ### 3.3 Considerations/Areas of Improvement
 There are a few odd implementations in this plugin that may not be ideal.
 1. The plugin uses the name attribute to uniquely identify each field. This would mean that there will be glitches if 
