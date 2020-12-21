@@ -3,6 +3,8 @@
 ### About
 The repository contains two Matomo plugins - User Flow and React Form Analytics. Both plugins are compatible on Matomo on-Premise, which is a free, open-source web analytics platform.  
 
+Do note that this plugin was created for personal use and is **not affiliated with Matomo** in any way.
+
 To install Matomo, visit the installation guide [here](https://matomo.org/docs/installation/).
 
 To use either of the plugins, please refer to the README in the respective folders.
