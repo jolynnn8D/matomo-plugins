@@ -2,6 +2,8 @@
 
 This plugin was built using the amCharts 4 library for Matomo v4.0.0-b2.
 
+[Developer's Guide](https://github.com/jolynnn8D/matomo-plugins/blob/master/ReactFormAnalytics/docs/index.md)
+
 ## Description 
 ![UI](./images/UI.png)
 ![UI2](./images/UI2.png)
