@@ -56,7 +56,7 @@ For load events, the tracker simply searches the HTML Document for existing form
 in point 1 in Focusin Events, which you can refer to for more details.
 
 #### 3.1.2 Focusin Events
-![Focusin Event Activity Diagram](../images/Focusin Event.png)
+![Focusin Event Activity Diagram](../images/FocusinEvent.png)
 
 The above diagram gives a run through of how a focus-in event is handled. There are a few main functions:
 1. **Search the current webpage of forms**: This is done when the URL changes, which is detected by storing
@@ -115,7 +115,7 @@ a series of actions sent to Matomo in the form of events. In this API, we are on
 `forms`. There are two main parts to the API:  
 1. For each visitor, we look at the events that were specific to the visitor only, and store the results of the events in a 
 local array `userEvents`. The array will only have information on forms that the particular visitor rendered/used.  
-    ![Matomo Focus In](../images/Matomo Focus In.png)
+    ![Matomo Focus In](../images/MatomoFocusIn.png)
     *Figure 2. Activity Diagram of form event for a single user*
 2. After summarizing information such as total time spent and total clicks on each field by the particular visitor, the
  results in the `userEvents` array will be processed and added to the resultant DataTable (which may contain other forms 
