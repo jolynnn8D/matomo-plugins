@@ -15,6 +15,6 @@ In addition to the plugins, there is a custom tracker made for React apps. The t
 ### Development
 To enable development mode on Matomo, please follow this [guide](https://developer.matomo.org/guides/getting-started-part-1).
 
-To get a better understanding of the plugin structure of User Flow and React Form Analytics, refer to Section 2 of the [User Flow guide](https://gitlab.com/kpdoggie/interns/matomo-plugins/-/blob/master/UserFlow/docs/index.md). 
+To get a better understanding of the plugin structure of User Flow and React Form Analytics, refer to Section 2 of the [User Flow guide](./UserFlow/docs/index.md). 
 
 To understand how the tracker works, please read the README in the tracker folder.
